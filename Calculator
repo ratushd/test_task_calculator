@@ -1,0 +1,114 @@
+import java.util.Scanner;
+import java.util.regex.Pattern;
+
+public class Main {
+
+    private static final String[] VALID_OPERATIONS = {"+", "-", "*", "/"};
+    private static final String[] VALID_ROMAN_INPUT_NUMERALS = {"I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"};
+    private static final String[] VALID_ARABIC_INPUT_NUMERALS = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"};
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Введите арифметическое выражение или команду 'stop':");
+        String input = scanner.nextLine();
+            while(!input.equalsIgnoreCase("Stop")){
+                System.out.println("Результат: " + parseAndCalculate(input));
+                System.out.println("Введите арифметическое выражение или команду 'stop':");
+                input = scanner.nextLine();
+                }
+            System.out.println("Программа остановлена.");
+    }
+
+        static String parseAndCalculate (String input){
+            for (String operation : VALID_OPERATIONS) {
+                if (input.contains(operation)) {
+                    String[] numbers = input.split(Pattern.quote(operation));
+                    if (numbers.length != 2) {
+                        throw new IllegalArgumentException("Неверное выражение. Введите два аргумента");
+                    }
+
+                    String arg1 = numbers[0].trim();
+                    String arg2 = numbers[1].trim();
+                    if (areBothArgumentsOfArabicNumericSystem(arg1, arg2)) {
+                        int arg1Int = Integer.parseInt(arg1);
+                        int arg2Int = Integer.parseInt(arg2);
+                        int result = calculate(arg1Int, arg2Int, operation);
+                        return String.valueOf(result);
+                    }
+
+                    if (areBothArgumentsOfRomanNumericSystem(arg1, arg2)) {
+                        int arg1Int = RomanToArabicConverter.convertDirect(arg1);
+                        int arg2Int = RomanToArabicConverter.convertDirect(arg2);
+                        int result = calculate(arg1Int, arg2Int, operation);
+                        return RomanToArabicConverter.convertReverse(result);
+                    }
+
+                    throw new IllegalArgumentException("Один или несколько аргументов не входят в допустимый диапазон или не принадлежат к одному типу чисел.");
+                }
+            }
+            throw new IllegalArgumentException("Недопустимая операция. Введите допустимую операцию: (+, -, *, /).");
+        }
+
+        private static boolean areBothArgumentsOfArabicNumericSystem (String arg1, String arg2){
+            return doesArgumentBelongToArabicNumerals(arg1) && doesArgumentBelongToArabicNumerals(arg2);
+        }
+
+        private static boolean doesArgumentBelongToArabicNumerals (String arg){
+            return doesArgumentBelongToNumericSystem(VALID_ARABIC_INPUT_NUMERALS, arg);
+        }
+
+        private static boolean doesArgumentBelongToNumericSystem (String[]numericSystemTokens, String arg){
+            for (String numericSystemToken : numericSystemTokens) {
+                if (numericSystemToken.equals(arg)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private static int calculate ( int arg1, int arg2, String operation){
+            return switch (operation) {
+                case "+" -> arg1 + arg2;
+                case "-" -> arg1 - arg2;
+                case "*" -> arg1 * arg2;
+                case "/" -> arg1 / arg2;
+                default -> throw new IllegalArgumentException("Недопустимая операция. Введите допустимую операцию: (+, -, *, /).");
+            };
+        }
+
+        private static boolean areBothArgumentsOfRomanNumericSystem (String arg1, String arg2){
+            return doesArgumentBelongToRomanNumerals(arg1) && doesArgumentBelongToRomanNumerals(arg2);
+        }
+
+        private static boolean doesArgumentBelongToRomanNumerals (String arg){
+            return doesArgumentBelongToNumericSystem(VALID_ROMAN_INPUT_NUMERALS, arg);
+        }
+
+        static class RomanToArabicConverter {
+            private static final int[] ARABIC_DIGITS = {100, 90, 50, 40, 10, 9, 5, 4, 1};
+            private static final String[] ROMAN_DIGITS = {"C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"};
+
+            static int convertDirect(String romanNumber) {
+                for (int i = 0; i < VALID_ROMAN_INPUT_NUMERALS.length; i++) {
+                    if (romanNumber.equals(VALID_ROMAN_INPUT_NUMERALS[i])) {
+                        return Integer.parseInt(VALID_ARABIC_INPUT_NUMERALS[i]);
+                    }
+                }
+                throw new IllegalArgumentException("Token is not recognized, not a Roman Number: %s".formatted(romanNumber));
+            }
+
+            static String convertReverse(int arabicNumber) {
+                if (arabicNumber < 1) {
+                    throw new IllegalArgumentException("Not convertable to Roman Numeric System number: %d".formatted(arabicNumber));
+                }
+                StringBuilder sb = new StringBuilder(); //
+                for (int i = 0; i < ARABIC_DIGITS.length; i++) {
+                    while (arabicNumber >= ARABIC_DIGITS[i]) {
+                        sb.append(ROMAN_DIGITS[i]);
+                        arabicNumber -= ARABIC_DIGITS[i];
+                    }
+                }
+                return sb.toString();
+            }
+        }
+    }
